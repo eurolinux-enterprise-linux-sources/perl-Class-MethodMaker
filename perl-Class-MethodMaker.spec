@@ -1,12 +1,15 @@
 Name:           perl-Class-MethodMaker
 Version:        2.16
-Release:        4%{?dist}
+Release:        6%{?dist}
 Summary:        Perl module for creating generic object-oriented methods
 
 Group:          Development/Libraries
 License:        GPL+ or Artistic
 URL:            http://search.cpan.org/~schwigon/Class-MethodMaker/
-Source0:        http://search.cpan.org/CPAN/authors/id/S/SC/SCHWIGON/class-methodmaker/Class-MethodMaker-%{version}.tar.gz
+# Original source: http://search.cpan.org/CPAN/authors/id/S/SC/SCHWIGON/class-methodmaker/Class-MethodMaker-%%{version}.tar.gz
+# Non-free tests have been removed, bug #1064837, implemented in upstream 2.28,
+# https://github.com/renormalist/class-methodmaker/issues/2
+Source0:        Class-MethodMaker-%{version}_repackaged.tar.gz
 
 BuildRequires:  perl(ExtUtils::MakeMaker)
 # Required by the tests
@@ -23,49 +26,46 @@ methods for your objects that perform standard tasks.
 %{?perl_default_filter}
 
 %prep
-%setup -q -T -c
-%setup -q -T -D -a0
+%setup -q -n Class-MethodMaker-%{version}
 
 %{?filter_setup:
 %filter_from_provides /^perl(Class::MethodMaker::Engine)$/d
+%filter_from_requires /^perl(AutoLoader)$/d
 %filter_setup
 }
 
 %build
-cd Class-MethodMaker-%{version}
 %{__perl} Makefile.PL INSTALLDIRS=perl OPTIMIZE="$RPM_OPT_FLAGS"
 make %{?_smp_mflags}
-cd ..
 
 %install
-rm -rf $RPM_BUILD_ROOT
-cd Class-MethodMaker-%{version}
 make pure_install PERL_INSTALL_ROOT=$RPM_BUILD_ROOT
-cd ..
 find $RPM_BUILD_ROOT -type f -a \( -name .packlist \
   -o \( -name '*.bs' -a -empty \) \) -exec rm -f {} ';'
 find $RPM_BUILD_ROOT -type d -depth -exec rmdir {} 2>/dev/null ';'
 chmod -R u+w $RPM_BUILD_ROOT/*
 
 %check
-cd Class-MethodMaker-%{version}
 # until deprecation will be fixed
 rm -rf t/redefine-warnings.t
 make test
-cd ..
-
-%clean
-rm -rf $RPM_BUILD_ROOT
 
 
 %files
 %defattr(-,root,root,-)
-%doc Class-MethodMaker-%{version}/Changes Class-MethodMaker-%{version}/README Class-MethodMaker-%{version}/TODO
+%doc Changes README TODO
 %{perl_archlib}/Class/
 %{perl_archlib}/auto/*
 %{_mandir}/man3/*.3*
 
 %changelog
+* Wed Apr 09 2014 Petr Pisar <ppisar@redhat.com> - 2.16-6
+- Remove non-free tests (bug #1064837)
+
+* Mon Feb 14 2011 Marcela Mašláňová <mmaslano@redhat.com> - 2.16-5
+- clean specfile
+- Related: rhbz#669046
+
 * Mon Jan 31 2011 Marcela Mašláňová <mmaslano@redhat.com> - 2.16-4
 - rebuild for RHEL-6.1 with change of vendor to privlib
 
